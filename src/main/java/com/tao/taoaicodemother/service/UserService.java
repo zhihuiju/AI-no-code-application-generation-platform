@@ -2,10 +2,10 @@ package com.tao.taoaicodemother.service;
 
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.core.service.IService;
-import com.tao.taoaicodemother.dto.UserQueryRequest;
+import com.tao.taoaicodemother.model.dto.UserQueryRequest;
 import com.tao.taoaicodemother.model.entity.User;
-import com.tao.taoaicodemother.vo.LoginUserVO;
-import com.tao.taoaicodemother.vo.UserVO;
+import com.tao.taoaicodemother.model.vo.LoginUserVO;
+import com.tao.taoaicodemother.model.vo.UserVO;
 import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.List;
