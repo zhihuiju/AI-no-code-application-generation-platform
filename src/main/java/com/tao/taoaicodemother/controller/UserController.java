@@ -10,7 +10,7 @@ import com.tao.taoaicodemother.constant.UserConstant;
 import com.tao.taoaicodemother.exception.BusinessException;
 import com.tao.taoaicodemother.exception.ErrorCode;
 import com.tao.taoaicodemother.exception.ThrowUtils;
-import com.tao.taoaicodemother.model.dto.*;
+import com.tao.taoaicodemother.model.dto.user.*;
 import com.tao.taoaicodemother.model.vo.LoginUserVO;
 import com.tao.taoaicodemother.model.vo.UserVO;
 import jakarta.annotation.Resource;

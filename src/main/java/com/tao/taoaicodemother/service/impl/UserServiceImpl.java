@@ -5,7 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
-import com.tao.taoaicodemother.model.dto.UserQueryRequest;
+import com.tao.taoaicodemother.model.dto.user.UserQueryRequest;
 import com.tao.taoaicodemother.exception.BusinessException;
 import com.tao.taoaicodemother.exception.ErrorCode;
 import com.tao.taoaicodemother.model.entity.User;

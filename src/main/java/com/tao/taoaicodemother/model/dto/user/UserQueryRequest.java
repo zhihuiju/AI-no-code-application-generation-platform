@@ -1,4 +1,4 @@
-package com.tao.taoaicodemother.model.dto;
+package com.tao.taoaicodemother.model.dto.user;
 
 import com.tao.taoaicodemother.common.PageRequest;
 import lombok.Data;
