@@ -6,7 +6,7 @@
         <RouterLink to="/">
           <div class="header-left">
             <img class="logo" src="@/assets/logo.png" alt="Logo" />
-            <h1 class="site-title">韬应用生成</h1>
+            <h1 class="site-title">TAO应用生成</h1>
           </div>
         </RouterLink>
       </a-col>
@@ -52,12 +52,10 @@ import { computed, h, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { type MenuProps, message } from 'ant-design-vue'
 import { useLoginUserStore } from '@/stores/loginUser.ts'
-import { LogoutOutlined } from '@ant-design/icons-vue'
 import { userLogout } from '@/api/userController.ts'
+import { LogoutOutlined, HomeOutlined } from '@ant-design/icons-vue'
 
-//获取登录用户信息
 const loginUserStore = useLoginUserStore()
-
 const router = useRouter()
 // 当前选中菜单
 const selectedKeys = ref<string[]>(['/'])
@@ -70,8 +68,9 @@ router.afterEach((to, from, next) => {
 const originItems = [
   {
     key: '/',
-    label: '首页',
-    title: '首页',
+    icon: () => h(HomeOutlined),
+    label: '主页',
+    title: '主页',
   },
   {
     key: '/admin/userManage',
@@ -79,15 +78,13 @@ const originItems = [
     title: '用户管理',
   },
   {
+    key: '/admin/appManage',
+    label: '应用管理',
+    title: '应用管理',
+  },
+  {
     key: 'others',
-    label: h(
-      'a',
-      {
-        href: 'https://github.com/zhihuiju/AI-no-code-application-generation-platform',
-        target: '_blank',
-      },
-      '开源地址',
-    ),
+    label: h('a', { href: 'https://github.com/zhihuiju/AI-no-code-application-generation-platform', target: '_blank' }, '开源地址'),
     title: '开源地址',
   },
 ]
