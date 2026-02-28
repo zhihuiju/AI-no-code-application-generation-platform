@@ -3,6 +3,7 @@ package com.tao.taoaicodemother.core.saver;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
+import com.tao.taoaicodemother.constant.AppConstant;
 import com.tao.taoaicodemother.exception.BusinessException;
 import com.tao.taoaicodemother.exception.ErrorCode;
 import com.tao.taoaicodemother.model.enums.CodeGenTypeEnum;
@@ -19,15 +20,21 @@ public abstract class CodeFileSaverTemplate<T> {
     /**
      * 文件保存的根目录
      */
-    private static final String FILE_SAVE_ROOT_DIR = System.getProperty("user.dir") + "/tmp/code_output";
+    private static final String FILE_SAVE_ROOT_DIR = AppConstant.CODE_OUTPUT_ROOT_DIR;
 
-    public final File saveCode(T result){
+    /**
+     * 模板方法：保存代码的标准流程
+     * @param result 代码结果对象
+     * @param appId 应用ID
+     * @return 保存的目录
+     */
+    public final File saveCode(T result , Long appId){
 
         //1.验证输入
         validateInput(result);
 
         //2.构建唯一目录
-        String baseDirPath = buildUniqueDir();
+        String baseDirPath = buildUniqueDir(appId);
 
         //3.保存文件（具体实现交给子类）
         saveFiles(result,baseDirPath);
@@ -58,12 +65,17 @@ public abstract class CodeFileSaverTemplate<T> {
     }
 
     /**
-     * 构建文件的唯一路径：tmp/code_output/bizType_雪花ID
+     * 构建文件的唯一路径：tmp/code_output/bizType_appId(bizType_雪花ID)
+     * @param appId 应用ID
      * @return
      */
-    protected String buildUniqueDir(){
+    protected String buildUniqueDir(Long appId){
+        if(appId == null){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,"应用ID不能为空");
+        }
         String codeType = getCodeType().getValue();
-        String uniqueDirName = StrUtil.format("{}_{}",codeType, IdUtil.getSnowflakeNextIdStr());
+//        String uniqueDirName = StrUtil.format("{}_{}",codeType, IdUtil.getSnowflakeNextIdStr());
+        String uniqueDirName = StrUtil.format("{}_{}",codeType, appId);
         String dirPath = FILE_SAVE_ROOT_DIR + File.separator + uniqueDirName;
         FileUtil.mkdir(dirPath);
         return dirPath;
