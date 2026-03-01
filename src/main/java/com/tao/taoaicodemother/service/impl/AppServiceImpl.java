@@ -17,17 +17,21 @@ import com.tao.taoaicodemother.model.dto.app.AppQueryRequest;
 import com.tao.taoaicodemother.model.entity.App;
 import com.tao.taoaicodemother.mapper.AppMapper;
 import com.tao.taoaicodemother.model.entity.User;
+import com.tao.taoaicodemother.model.enums.ChatHistoryMessageTypeEnum;
 import com.tao.taoaicodemother.model.enums.CodeGenTypeEnum;
 import com.tao.taoaicodemother.model.vo.AppVO;
 import com.tao.taoaicodemother.model.vo.UserVO;
 import com.tao.taoaicodemother.service.AppService;
+import com.tao.taoaicodemother.service.ChatHistoryService;
 import com.tao.taoaicodemother.service.UserService;
 import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.javassist.compiler.CodeGen;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
 import java.io.File;
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,6 +45,7 @@ import java.util.stream.Collectors;
  * @author 韬
  */
 @Service
+@Slf4j
 public class AppServiceImpl extends ServiceImpl<AppMapper, App>  implements AppService{
 
     @Resource
@@ -49,31 +54,47 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>  implements AppS
     @Resource
     private AiCodeGeneratorFacade aiCodeGeneratorFacade;
 
+    @Resource
+    private ChatHistoryService chatHistoryService;
+
     @Override
     public Flux<String> chatTOGenCode(Long appId, String message, User longinUser) {
 
         //1.参数校验
         ThrowUtils.throwIf(appId == null || appId <= 0 ,ErrorCode.PARAMS_ERROR,"应用ID错误");
         ThrowUtils.throwIf(StrUtil.isBlank(message),ErrorCode.PARAMS_ERROR,"提示词不能为空");
-
         //2.查询应用信息
         App app = this.getById(appId);
         ThrowUtils.throwIf(app == null , ErrorCode.NOT_FOUND_ERROR,"应用不存在");
-
         //3.权限校验，仅本人可以和自己的应用对话
         if(!app.getUserId().equals(longinUser.getId())){
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR,"无权限访问该应用");
         }
-
         //4.获取应用的代码生成类型
         String codeGenType = app.getCodeGenType();
         CodeGenTypeEnum codeGenTypeEnum = CodeGenTypeEnum.getEnumByValue(codeGenType);
         if(codeGenTypeEnum == null){
             throw new BusinessException(ErrorCode.PARAMS_ERROR,"应用代码生成类型错误");
         }
-
-        //5.调用AI生成代码
-        return aiCodeGeneratorFacade.generateAndSaveCodeStream(message, codeGenTypeEnum, appId);
+        //5.在调用AI前，先保存用户消息到数据库中
+        chatHistoryService.addChatMessage(appId , message , ChatHistoryMessageTypeEnum.USER.getValue(), longinUser.getId());
+        //6.调用AI生成代码（流式）
+        Flux<String> contentFlux = aiCodeGeneratorFacade.generateAndSaveCodeStream(message,codeGenTypeEnum,appId);
+        //7.收集AI响应内容，并且在完成后保存记录到对话历史
+        StringBuilder aiResponseBuilder = new StringBuilder();
+        return contentFlux.map(chunk -> {
+            //实时收集AI响应内容，并且在完成后保存记录到对话历史
+            aiResponseBuilder.append(chunk);
+            return chunk;
+        }).doOnComplete(() -> {
+            //流式返回完成后，保存AI消息到对话历史中
+            String aiResponse = aiResponseBuilder.toString();
+            chatHistoryService.addChatMessage(appId , aiResponse , ChatHistoryMessageTypeEnum.AI.getValue(), longinUser.getId());
+        }).doOnError(error ->{
+            //如果AI回复失败，也需要保存记录到数据库中
+            String errorMessage = "AI 回复失败：" + error.getMessage();
+            chatHistoryService.addChatMessage(appId, errorMessage, ChatHistoryMessageTypeEnum.AI.getValue(), longinUser.getId());
+        });
     }
 
     @Override
@@ -185,5 +206,22 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>  implements AppS
                 .orderBy(sortField, "ascend".equals(sortOrder));
     }
 
-
+    @Override
+    public boolean removeById(Serializable id){
+        if(id == null){
+            return false;
+        }
+        long appId = Long.parseLong(id.toString());
+        if(appId <= 0){
+            return false;
+        }
+        //先删除关联对话历史
+        try {
+            chatHistoryService.deleteByAppId(appId);
+        }catch (Exception e){
+            log.error("删除应用关联对话历史失败,{}",e.getMessage());
+        }
+        //删除应用
+        return super.removeById(id);
+    }
 }
