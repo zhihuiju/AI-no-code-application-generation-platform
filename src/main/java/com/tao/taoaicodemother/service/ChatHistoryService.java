@@ -6,6 +6,7 @@ import com.mybatisflex.core.service.IService;
 import com.tao.taoaicodemother.model.dto.chathistory.ChatHistoryQueryRequest;
 import com.tao.taoaicodemother.model.entity.ChatHistory;
 import com.tao.taoaicodemother.model.entity.User;
+import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 
 import java.time.LocalDateTime;
 
@@ -44,6 +45,15 @@ public interface ChatHistoryService extends IService<ChatHistory> {
     Page<ChatHistory> listAppChatHistoryByPage(Long appId, int pageSize,
                                                LocalDateTime lastCreateTime,
                                                User loginUser);
+
+    /**
+     * 加载数据库中的对话历史到内存 （当caffeine 和 redis 中没有时从磁盘取）
+     * @param appId 应用ID
+     * @param chatMemory 对话记忆
+     * @param maxCount 最多加载多少条
+     * @return 成功加载的数目
+     */
+    int loadChatHistoryToMemory(Long appId, MessageWindowChatMemory chatMemory, int maxCount);
 
     /**
      * 获取查询包装类 构造查询条件

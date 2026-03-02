@@ -1,6 +1,7 @@
 package com.tao.taoaicodemother.core;
 
 import com.tao.taoaicodemother.ai.AiCodeGeneratorService;
+import com.tao.taoaicodemother.ai.AiCodeGeneratorServiceFactory;
 import com.tao.taoaicodemother.ai.model.HtmlCodeResult;
 import com.tao.taoaicodemother.ai.model.MultiFileCodeResult;
 import com.tao.taoaicodemother.core.parser.CodeParserExecutor;
@@ -8,6 +9,7 @@ import com.tao.taoaicodemother.core.saver.CodeFileSaverExecutor;
 import com.tao.taoaicodemother.exception.BusinessException;
 import com.tao.taoaicodemother.exception.ErrorCode;
 import com.tao.taoaicodemother.model.enums.CodeGenTypeEnum;
+import com.tao.taoaicodemother.service.ChatHistoryService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -20,7 +22,7 @@ import java.io.File;
 public class AiCodeGeneratorFacade {
 
     @Resource
-    private AiCodeGeneratorService aiCodeGeneratorService;
+    private AiCodeGeneratorServiceFactory aiCodeGeneratorServiceFactory;
 
     /**
      * 生成并保存代码门面 （统一入口）
@@ -33,6 +35,8 @@ public class AiCodeGeneratorFacade {
         if(codeGenTypeEnum == null){
             throw new BusinessException(ErrorCode.PARAMS_ERROR,"生成类型不能为空");
         }
+        //根据appid获取相应的Ai服务实例
+        AiCodeGeneratorService aiCodeGeneratorService = aiCodeGeneratorServiceFactory.getAiCodeGeneratorService(appId);
         return switch (codeGenTypeEnum){
 //            case HTML -> generateAndSaveHtmlCode(userMessage);
             case HTML -> {
@@ -62,6 +66,8 @@ public class AiCodeGeneratorFacade {
         if(codeGenTypeEnum == null){
             throw new BusinessException(ErrorCode.PARAMS_ERROR,"生成类型不能为空");
         }
+        //根据appid获取相应的Ai服务实例
+        AiCodeGeneratorService aiCodeGeneratorService = aiCodeGeneratorServiceFactory.getAiCodeGeneratorService(appId);
         return switch (codeGenTypeEnum){
 //            case HTML -> generateAndSaveHtmlCodeStream(userMessage);
 //            case MULTI_FILE -> generateAndSaveMultiFileCodeStream(userMessage);
