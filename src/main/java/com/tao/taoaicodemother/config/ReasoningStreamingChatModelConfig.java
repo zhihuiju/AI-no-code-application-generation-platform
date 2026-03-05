@@ -22,7 +22,7 @@ public class ReasoningStreamingChatModelConfig {
         final int maxTokens = 8192;
         //生成环境使用
 //        final String modelName = "deepseek-reasoner";
-//        final int maxTokens = 40000;
+//        final int maxTokens = 32768;
         return OpenAiStreamingChatModel.builder()
                 .apiKey(apiKey)
                 .baseUrl(baseUrl)
