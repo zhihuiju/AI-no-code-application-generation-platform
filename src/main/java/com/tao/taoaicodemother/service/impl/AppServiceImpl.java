@@ -6,7 +6,6 @@ import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import com.mybatisflex.core.query.QueryWrapper;
-import com.mybatisflex.core.service.IService;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import com.tao.taoaicodemother.constant.AppConstant;
 import com.tao.taoaicodemother.core.AiCodeGeneratorFacade;
@@ -25,12 +24,10 @@ import com.tao.taoaicodemother.model.vo.AppVO;
 import com.tao.taoaicodemother.model.vo.UserVO;
 import com.tao.taoaicodemother.service.AppService;
 import com.tao.taoaicodemother.service.ChatHistoryService;
+import com.tao.taoaicodemother.service.ScreenShotService;
 import com.tao.taoaicodemother.service.UserService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.ibatis.javassist.compiler.CodeGen;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.interceptor.CacheableOperation;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
@@ -69,6 +66,9 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>  implements AppS
 
     @Resource
     private VueProjectBuilder vueProjectBuilder;
+
+    @Resource
+    private ScreenShotService screenshotService;
 
     @Override
     public Flux<String> chatTOGenCode(Long appId, String message, User longinUser) {
@@ -151,9 +151,27 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>  implements AppS
         boolean updateResult = this.updateById(updateApp);
         ThrowUtils.throwIf(!updateResult,ErrorCode.OPERATION_ERROR,"更新应用部署信息失败");
         //10、返回访问的URL地址
-        return String.format("%s/%s",AppConstant.CODE_DEPLOY_HOST,deployKey);
+        String appDeployUrl = String.format("%s/%s",AppConstant.CODE_DEPLOY_HOST,deployKey);
+        //11、异步生成截图并且更新应用封面
+        generateAppScreenshotAsync(appId,appDeployUrl);
+        return appDeployUrl;
     }
 
+    @Override
+    public void generateAppScreenshotAsync(Long appId, String appUrl) {
+        // 使用虚拟线程并执行
+        Thread.startVirtualThread(() -> {
+            //调用截图服务生成截图并上传
+            String screenshotUrl = screenshotService.generateAndUploadScreenshot(appUrl);
+//            String screenshotUrl = "https://" + screenshotService.generateAndUploadScreenshot(appUrl);
+            //更新数据库的封面
+            App updateApp = new App();
+            updateApp.setId(appId);
+            updateApp.setCover(screenshotUrl);
+            boolean updated = this.updateById(updateApp);
+            ThrowUtils.throwIf(!updated,ErrorCode.OPERATION_ERROR,"更新应用封面字段失败");
+        });
+    }
 
     @Override
     public AppVO getAppVO(App app) {
