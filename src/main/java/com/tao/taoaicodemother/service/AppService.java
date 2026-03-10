@@ -2,6 +2,7 @@ package com.tao.taoaicodemother.service;
 
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.core.service.IService;
+import com.tao.taoaicodemother.model.dto.app.AppAddRequest;
 import com.tao.taoaicodemother.model.dto.app.AppQueryRequest;
 import com.tao.taoaicodemother.model.entity.App;
 import com.tao.taoaicodemother.model.entity.User;
@@ -25,6 +26,14 @@ public interface AppService extends IService<App> {
      * @return
      */
     Flux<String> chatTOGenCode(Long appId , String message , User longinUser);
+
+    /**
+     * 创建应用
+     * @param appAddRequest
+     * @param loginUser
+     * @return
+     */
+    Long createApp(AppAddRequest appAddRequest, User loginUser);
 
     /**
      * 应用部署
